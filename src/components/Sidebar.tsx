@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDocuments } from '../context/DocumentContext';
+import { useNotes } from '../context/NoteContext';
 import { useDarkMode } from '../context/DarkModeContext';
 
 type Props = {
@@ -8,7 +8,7 @@ type Props = {
 };
 
 const Sidebar: React.FC<Props> = ({ open = false, setOpen }) => {
-  const { docs, activeId, setActiveId, createDoc, deleteDoc } = useDocuments();
+  const { notes, activeId, setActiveId, createNote, deleteNote } = useNotes();
   const { isDark, toggle } = useDarkMode();
 
   return (
@@ -38,11 +38,11 @@ const Sidebar: React.FC<Props> = ({ open = false, setOpen }) => {
           </button>
         </div>
       <div className="flex justify-between mb-2 items-center">
-        <strong className="text-gray-900 dark:text-white">Documents</strong>
+        <strong className="text-gray-900 dark:text-white">Notes</strong>
         <div className="flex items-center gap-2">
           <button
             className="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded"
-            onClick={createDoc}
+            onClick={createNote}
           >
             New
           </button>
@@ -55,7 +55,7 @@ const Sidebar: React.FC<Props> = ({ open = false, setOpen }) => {
         </div>
       </div>
       <ul className="space-y-1">
-        {docs.map(d => (
+        {notes.map(d => (
           <li key={d.id} className={`p-2 rounded ${d.id === activeId ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>
             <div className="flex justify-between items-center">
               <button className="text-left flex-1 truncate md:inline" onClick={() => setActiveId(d.id)}>
@@ -64,7 +64,7 @@ const Sidebar: React.FC<Props> = ({ open = false, setOpen }) => {
               </button>
               <button
                 className="ml-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
-                onClick={() => deleteDoc(d.id)}
+                onClick={() => deleteNote(d.id)}
               >
                 ×
               </button>

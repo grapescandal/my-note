@@ -1,8 +1,8 @@
-export interface Document {
+export interface Note {
   id: string;
   title: string;
   content: string;
   updatedAt: number;
 }
 
-export type Documents = Document[];
+export type Notes = Note[];

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import { DocumentProvider } from './context/DocumentContext';
+import { NoteProvider } from './context/NoteContext';
 import { DarkModeProvider } from './context/DarkModeContext';
 import Sidebar from './components/Sidebar';
 import Editor from './components/Editor';
@@ -10,7 +10,7 @@ const App = () => {
 
   return (
     <DarkModeProvider>
-      <DocumentProvider>
+      <NoteProvider>
         <div className="flex h-screen">
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
 
@@ -27,7 +27,7 @@ const App = () => {
 
           <Editor />
         </div>
-      </DocumentProvider>
+      </NoteProvider>
     </DarkModeProvider>
   );
 };
