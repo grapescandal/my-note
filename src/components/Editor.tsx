@@ -11,7 +11,7 @@ const Editor: React.FC = () => {
 
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
-      saveNote(active.id, { title: active.title, content: active.content }).catch(() => {
+      saveNote({ id: active.id, title: active.title, content: active.content }).catch(() => {
         // errors handled in context
       });
       timer.current = null;
@@ -21,7 +21,7 @@ const Editor: React.FC = () => {
       if (timer.current) window.clearTimeout(timer.current);
       timer.current = null;
     };
-  }, [active?.title, active?.content, active?.id, saveNote]);
+  }, [active?.title, active?.content, active?.id]);
 
   if (!active) return <main className="p-4">No note selected</main>;
 

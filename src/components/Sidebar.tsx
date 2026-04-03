@@ -8,7 +8,7 @@ type Props = {
 };
 
 const Sidebar: React.FC<Props> = ({ open = false, setOpen }) => {
-  const { notes, activeId, setActiveId, createNote, deleteNote } = useNotes();
+  const { notes, activeId, createNote, openNote, deleteNote } = useNotes();
   const { isDark, toggle } = useDarkMode();
 
   return (
@@ -58,7 +58,7 @@ const Sidebar: React.FC<Props> = ({ open = false, setOpen }) => {
         {notes.map(d => (
           <li key={d.id} className={`p-2 rounded ${d.id === activeId ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>
             <div className="flex justify-between items-center">
-              <button className="text-left flex-1 truncate md:inline" onClick={() => setActiveId(d.id)}>
+              <button className="text-left flex-1 truncate md:inline" onClick={() => openNote(d.id)}>
                 <span className="hidden md:inline">{d.title}</span>
                 <span className="md:hidden">{d.title ? d.title.charAt(0) : ''}</span>
               </button>

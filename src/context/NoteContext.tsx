@@ -7,9 +7,10 @@ interface NoteContextType {
   notes: Note[];
   activeId: string | null;
   setActiveId: (id: string | null) => void;
-  createNote: () => Promise<void>;
+  openNote: (id: string) => Promise<void>;
+  createNote: () => void;
   updateNote: (id: string, patch: Partial<Note>) => void;
-  saveNote: (id?: string, patch?: Partial<Note>) => Promise<void>;
+  saveNote: (patch?: Partial<Note>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   loading: boolean;
   error: string | null;
@@ -59,72 +60,56 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  async function createNote() {
-    setLoading(true);
-    setError(null);
-    try {
-      const saved = await saveNote(undefined, { title: 'Untitled', content: '' });
-      // saveNote already prepends and sets activeId when id is omitted
-      return saved;
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      // fallback to local temp note
-      const id = `local-${Date.now()}`;
-      const note: Note = { id, title: 'Untitled', content: '', updatedAt: Date.now() };
-      setNotes(prev => [note, ...prev]);
-      setActiveId(id);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function updateNote(id: string, patch: Partial<Note>) {
     setNotes(prev => prev.map(d => (d.id === id ? { ...d, ...patch, updatedAt: Date.now() } : d)));
   }
 
-  async function saveNote(id?: string, patch: Partial<Note> = {}) {
+  async function saveNote(patch: Partial<Note> = {}) {
     setLoading(true);
     setError(null);
     try {
-      if (!id) {
-        // create new note on server
+      const id = activeId;
+
+      // If there's no active id or it's a local temporary id, create on server
+      if (!id || id.startsWith('local-')) {
         const payload = {
           title: patch.title ?? 'Untitled',
           content: patch.content ?? '',
         };
         const saved = await saveNoteApi(payload);
-        setNotes(prev => [saved, ...prev]);
+
+        setNotes(prev => {
+          if (id && id.startsWith('local-')) {
+            return prev.map(n => (n.id === id ? saved : n));
+          }
+          return [saved, ...prev];
+        });
+
         setActiveId(saved.id);
         return;
       }
 
-      // update existing (or replace local temp)
+      // Update existing note
       const existing = notes.find(n => n.id === id);
       const merged = { ...(existing ?? {}), ...(patch ?? {}) } as Note;
-
-      const payload: { id?: string; title: string; content: string } = {
-        title: merged.title,
-        content: merged.content,
-      };
-      if (!id.startsWith('local-')) payload.id = id;
-
+      const payload = { id, title: merged.title ?? 'Untitled', content: merged.content ?? '' };
       const saved = await saveNoteApi(payload);
 
-      setNotes(prev => {
-        if (id.startsWith('local-') && saved.id !== id) {
-          return prev.map(n => (n.id === id ? saved : n));
-        }
-        return prev.map(n => (n.id === saved.id ? saved : n));
-      });
-
-      if (id.startsWith('local-') && saved.id !== id) {
-        setActiveId(saved.id);
-      }
+      setNotes(prev => prev.map(n => (n.id === saved.id ? saved : n)));
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
       setLoading(false);
     }
+  }
+
+  function createNote() {
+    // create a local temporary note and focus it — it will be saved by autosave
+    const id = `local-${Date.now()}`;
+    const note: Note = { id, title: 'Untitled', content: '', updatedAt: Date.now() };
+    setNotes(prev => [note, ...prev]);
+    setActiveId(id);
   }
 
   async function deleteNoteHandler(id: string) {
@@ -144,6 +129,20 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
         if (activeId === id) setActiveId(filtered[0]?.id ?? null);
         return filtered;
       });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function openNote(id: string) {
+    setActiveId(id);
+    setLoading(true);
+    setError(null);
+    try {
+      const full = await fetchNoteById(id);
+      setNotes(prev => prev.map(d => (d.id === full.id ? full : d)));
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
     } finally {
       setLoading(false);
     }
@@ -176,10 +175,23 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [activeId, notes]);
+  }, [activeId]);
 
   return (
-    <NoteContext.Provider value={{ notes, activeId, setActiveId, createNote, updateNote, saveNote, deleteNote: deleteNoteHandler, loading, error }}>
+    <NoteContext.Provider
+      value={{
+        notes,
+        activeId,
+        setActiveId,
+        openNote,
+        createNote,
+        updateNote,
+        saveNote,
+        deleteNote: deleteNoteHandler,
+        loading,
+        error,
+      }}
+    >
       {children}
     </NoteContext.Provider>
   );

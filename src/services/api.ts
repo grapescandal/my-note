@@ -37,7 +37,7 @@ export async function fetchNoteById(id: string): Promise<Note> {
 export async function saveNote(payload: {
   id?: string;
   title: string;
-  content: string;
+  content?: string;
 }): Promise<Note> {
   const res = await fetch(url("/api/notes"), {
     method: "POST",
@@ -51,8 +51,7 @@ export async function deleteNote(id: string): Promise<void> {
   const res = await fetch(url(`/api/notes/${encodeURIComponent(id)}`), {
     method: "DELETE",
   });
-  // delete may return 204 No Content; handleResponse tolerates empty bodies
   await handleResponse<void>(res);
 }
 
-export default { fetchNotes, fetchNoteById, deleteNote };
+export default { fetchNotes, fetchNoteById, saveNote, deleteNote };
