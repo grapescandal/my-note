@@ -1,4 +1,7 @@
 FROM node:20-alpine AS builder
+# Allow build-time API URL so CRA inlines the value during `yarn build`
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
 WORKDIR /app
 # copy package manifest and yarn lock for deterministic installs
 COPY package.json yarn.lock ./
@@ -7,8 +10,9 @@ RUN yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 
-FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=builder /app/build ./build
+RUN npm i -g serve
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", "build", "-l", "80"]

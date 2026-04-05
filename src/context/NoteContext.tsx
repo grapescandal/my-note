@@ -3,6 +3,9 @@ import { Note } from '../types';
 import { loadDocs, saveDocs } from '../services/storage';
 import { fetchNotes, fetchNoteById, deleteNote, saveNote as saveNoteApi } from '../services/api';
 
+// Dev-only: prevent duplicate initial load when React Strict Mode remounts
+let initialLoadDone = false;
+
 interface NoteContextType {
   notes: Note[];
   activeId: string | null;
@@ -37,13 +40,15 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
     async function load() {
+      if (process.env.NODE_ENV === 'development' && initialLoadDone) return;
+      initialLoadDone = true;
       setLoading(true);
       setError(null);
       try {
         const remote = await fetchNotes();
         if (!mounted) return;
-        setNotes(remote);
-        setActiveId(remote[0]?.id ?? null);
+        setNotes(remote ?? []);
+        setActiveId(remote?.[0]?.id ?? null);
       } catch (e: any) {
         console.warn('Failed to fetch notes from backend, using local cache', e);
         setError(e?.message ?? String(e));
@@ -78,6 +83,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
           content: patch.content ?? '',
         };
         const saved = await saveNoteApi(payload);
+        if (!saved) throw new Error('Empty response from saveNote');
 
         setNotes(prev => {
           if (id && id.startsWith('local-')) {
@@ -86,7 +92,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
           return [saved, ...prev];
         });
 
-        setActiveId(saved.id);
+        setActiveId(saved.id ?? null);
         return;
       }
 
@@ -95,6 +101,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
       const merged = { ...(existing ?? {}), ...(patch ?? {}) } as Note;
       const payload = { id, title: merged.title ?? 'Untitled', content: merged.content ?? '' };
       const saved = await saveNoteApi(payload);
+      if (!saved) throw new Error('Empty response from saveNote');
 
       setNotes(prev => prev.map(n => (n.id === saved.id ? saved : n)));
     } catch (e: any) {

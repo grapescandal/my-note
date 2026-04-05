@@ -5,9 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Frontend will call backend at domain:8080 (adjust to your real domain)
+        REACT_APP_API_URL: "http://localhost:8080"
     image: my-note:latest
     ports:
-      - "8080:80"
+      - "3000:80"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "-q", "--spider", "http://localhost:80/"]
