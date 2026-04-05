@@ -39,7 +39,7 @@ const Editor: React.FC = () => {
       if (timer.current) window.clearTimeout(timer.current);
       timer.current = null;
     };
-  }, [active?.title, active?.content, active?.id]);
+  }, [active, saveNote]);
 
   if (!active) return <main className="p-4">No note selected</main>;
 

@@ -61,4 +61,5 @@ export async function deleteNote(id: string): Promise<void> {
   await handleResponse<void>(res, "DELETE");
 }
 
-export default { fetchNotes, fetchNoteById, saveNote, deleteNote };
+const api = { fetchNotes, fetchNoteById, saveNote, deleteNote };
+export default api;

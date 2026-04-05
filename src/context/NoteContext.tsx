@@ -182,7 +182,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [activeId]);
+  }, [activeId, notes]);
 
   return (
     <NoteContext.Provider
