@@ -155,7 +155,6 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!activeId) return;
     const doc = notes.find(d => d.id === activeId);
@@ -172,7 +171,12 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
       try {
         const full = await fetchNoteById(id);
         if (!mounted) return;
-        setNotes(prev => prev.map(d => (d.id === full.id ? full : d)));
+        // Only update notes if the fetched detail differs from existing
+        const existing = notes.find(d => d.id === full.id);
+        const same = existing && existing.content === full.content && existing.title === full.title && existing.updatedAt === full.updatedAt;
+        if (!same) {
+          setNotes(prev => prev.map(d => (d.id === full.id ? full : d)));
+        }
       } catch (e: any) {
         setError(e?.message ?? String(e));
       } finally {
@@ -183,7 +187,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [activeId]);
+  }, [activeId, notes]);
 
   return (
     <NoteContext.Provider
