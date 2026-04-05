@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Note } from '../types';
 import { loadDocs, saveDocs } from '../services/storage';
 import { fetchNotes, fetchNoteById, deleteNote, saveNote as saveNoteApi } from '../services/api';
@@ -66,11 +66,11 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
 
-  function updateNote(id: string, patch: Partial<Note>) {
+  const updateNote = useCallback((id: string, patch: Partial<Note>) => {
     setNotes(prev => prev.map(d => (d.id === id ? { ...d, ...patch, updatedAt: Date.now() } : d)));
-  }
+  }, []);
 
-  async function saveNote(patch: Partial<Note> = {}) {
+  const saveNote = useCallback(async (patch: Partial<Note> = {}) => {
     setLoading(true);
     setError(null);
     try {
@@ -109,17 +109,17 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeId, notes]);
 
-  function createNote() {
+  const createNote = useCallback(() => {
     // create a local temporary note and focus it — it will be saved by autosave
     const id = `local-${Date.now()}`;
     const note: Note = { id, title: 'Untitled', content: '', updatedAt: Date.now() };
     setNotes(prev => [note, ...prev]);
     setActiveId(id);
-  }
+  }, []);
 
-  async function deleteNoteHandler(id: string) {
+  const deleteNoteHandler = useCallback(async (id: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -139,9 +139,9 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeId]);
 
-  async function openNote(id: string) {
+  const openNote = useCallback(async (id: string) => {
     setActiveId(id);
     setLoading(true);
     setError(null);
@@ -153,8 +153,9 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!activeId) return;
     const doc = notes.find(d => d.id === activeId);
@@ -182,7 +183,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [activeId, notes]);
+  }, [activeId]);
 
   return (
     <NoteContext.Provider
